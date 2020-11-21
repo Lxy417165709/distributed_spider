@@ -6,7 +6,12 @@ import (
 )
 
 var (
-	db *gorm.DB
+	mysqlDB *gorm.DB
+)
+
+var (
+	AddressDB = new(addressDao)
+	ImageDB   = new(ImageDao)
 )
 
 //func LogSet(isOpen bool) {
@@ -16,7 +21,7 @@ var (
 //}
 
 func InitDB(link, dbName string, maxCon int) {
-	db = NewDB(GenDSN(link, dbName), maxCon)
+	mysqlDB = NewDB(GenDSN(link, dbName), maxCon)
 }
 
 func GenDSN(link, db string) string {

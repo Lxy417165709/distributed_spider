@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type CrawlStatus int
 
 const (
@@ -12,20 +14,32 @@ type CrawlSource string
 
 type Address struct {
 	Id           int
-	Url          string
+	URL          string
 	CrawlStatus  CrawlStatus
 	CrawlSource  CrawlSource
 	CrawlNodeNum int
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+func (*Address) TableName() string {
+	return "spd_address"
 }
 
 type Image struct {
 	Id        int
-	Url       int
+	URL       string
+	MD5       string
 	AddressId int
+	CreatedAt time.Time
+}
+
+func (*Image) TableName() string {
+	return "spd_image"
 }
 
 type CrawlResult struct {
-	Url       string
+	URL       string
 	AddressId int
 	Err       error
 	ImageUrls []string
