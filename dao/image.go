@@ -13,7 +13,7 @@ type ImageDao struct{}
 func (*ImageDao) Create(dataUrl string, md5 string, addressId int) error {
 	if err := mysqlDB.Create(&model.Image{
 		MD5:       md5,
-		URL:       dataUrl,
+		Url:       dataUrl,
 		AddressId: addressId,
 		CreatedAt: time.Now(),
 	}).Error; err != nil {

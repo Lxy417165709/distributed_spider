@@ -2,11 +2,9 @@ package handler
 
 import (
 	"context"
-	"crypto/md5"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
-	"io/ioutil"
 	"net/http"
 	"spider/common/logger"
 	"spider/model"
@@ -18,35 +16,35 @@ type SpiderWorker struct {
 	imageUrlFilters []FilterFunction
 	crawlUrlFilters []FilterFunction
 	ctx             context.Context
-
-	crawlResultChannel chan *model.CrawlResult
-	crawlUrlChannel    chan string
+	cancelFunc      context.CancelFunc
 }
 
 func NewSpiderWorker(
 	imageUrlFilters []FilterFunction,
 	crawlUrlFilters []FilterFunction,
 	ctx context.Context,
-	crawlResultChannel chan *model.CrawlResult,
-	crawlUrlChannel chan string,
+	cancelFunc context.CancelFunc,
+
 ) *SpiderWorker {
 	return &SpiderWorker{
-		httpClient:         NewClient(),
-		imageUrlFilters:    imageUrlFilters,
-		crawlUrlFilters:    crawlUrlFilters,
-		ctx:                ctx,
-		crawlResultChannel: crawlResultChannel,
-		crawlUrlChannel:    crawlUrlChannel,
+		httpClient:      NewClient(),
+		imageUrlFilters: imageUrlFilters,
+		crawlUrlFilters: crawlUrlFilters,
+		ctx:             ctx,
+		cancelFunc:      cancelFunc,
 	}
 }
 
-func (s *SpiderWorker) Run() {
+func (s *SpiderWorker) Run(
+	crawlUrlChannel chan string,
+	crawlResultChannel chan *model.CrawlResult,
+) {
 	for {
 		select {
 		case <-s.ctx.Done():
 			return
-		case url := <-s.crawlUrlChannel:
-			s.crawlResultChannel <- s.Crawl(url)
+		case url := <-crawlUrlChannel:
+			crawlResultChannel <- s.Crawl(url)
 		}
 		time.Sleep(5 * time.Second)
 	}
@@ -114,21 +112,3 @@ func (s *SpiderWorker) getCrawlUrlsAndImageUrls(res *http.Response) ([]string, [
 	return crawlUrls, imageUrls
 }
 
-func (s *SpiderWorker) getImageMd5(imageUrl string) string {
-	res, err := s.httpClient.Get(imageUrl)
-	if err != nil {
-		logger.Error("Fail to finish http.Get", zap.String("imageUrl", imageUrl), zap.Error(err))
-		return ""
-	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			logger.Error("Fail to finish res.Body.Close", zap.Any("body", res.Body), zap.Error(err))
-		}
-	}()
-	data, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		logger.Error("Fail to finish ioutil.ReadAll", zap.Any("body", res.Body), zap.Error(err))
-		return ""
-	}
-	return fmt.Sprintf("%x", md5.Sum(data))
-}

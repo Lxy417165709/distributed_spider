@@ -21,7 +21,6 @@ func TestSpiderWorker(t *testing.T) {
 		})
 		return result
 	}
-
 	f2 := func(doc *goquery.Document, res *http.Response) []string {
 		result := make([]string, 0)
 		doc.Find("img").Each(func(i int, s *goquery.Selection) {
@@ -36,7 +35,52 @@ func TestSpiderWorker(t *testing.T) {
 		})
 		return result
 	}
+	f3 := func(doc *goquery.Document, res *http.Response) []string {
+		result := make([]string, 0)
+		doc.Find("div").Each(func(i int, s *goquery.Selection) {
+			absoluteUrl := getAbsoluteUrl(s, res.Request, "data-bkg")
+			if isImageUrl(absoluteUrl) {
+				result = append(result, absoluteUrl)
+			}
+		})
+		return result
+	}
+	spiderWorker := NewSpiderWorker(
+		[]FilterFunction{f2, f3},
+		[]FilterFunction{f1},
+		context.Background(),
+		nil,
+	)
+	logger.Info("Crawl test", zap.Any("result", spiderWorker.Crawl("http://www.baidu.com")))
+}
 
+func baiduSpider() {
+	parentCtx := context.Background()
+
+	f1 := func(doc *goquery.Document, res *http.Response) []string {
+		result := make([]string, 0)
+		doc.Find("a").Each(func(i int, s *goquery.Selection) {
+			absoluteUrl := getAbsoluteUrl(s, res.Request, "href")
+			if isHttpUrl(absoluteUrl) {
+				result = append(result, absoluteUrl)
+			}
+		})
+		return result
+	}
+	f2 := func(doc *goquery.Document, res *http.Response) []string {
+		result := make([]string, 0)
+		doc.Find("img").Each(func(i int, s *goquery.Selection) {
+			absoluteUrl := getAbsoluteUrl(s, res.Request, "src")
+			if isImageUrl(absoluteUrl) {
+				result = append(result, absoluteUrl)
+			}
+			absoluteUrl = getAbsoluteUrl(s, res.Request, "data-src")
+			if isImageUrl(absoluteUrl) {
+				result = append(result, absoluteUrl)
+			}
+		})
+		return result
+	}
 	f3 := func(doc *goquery.Document, res *http.Response) []string {
 		result := make([]string, 0)
 		doc.Find("div").Each(func(i int, s *goquery.Selection) {
@@ -48,14 +92,35 @@ func TestSpiderWorker(t *testing.T) {
 		return result
 	}
 
-	spiderWorker := NewSpiderWorker(
-		[]FilterFunction{f2, f3},
-		[]FilterFunction{f1},
-		context.Background(),
-		nil,
-		nil,
-	)
-	logger.Info("Crawl test", zap.Any("result", spiderWorker.Crawl("http://www.baidu.com")))
+	spiderWorkers := make([]*SpiderWorker, 0)
+	for i := 0; i < 3; i++ {
+		ctx, cancel := context.WithCancel(parentCtx)
+		spiderWorker := NewSpiderWorker(
+			[]FilterFunction{f2, f3},
+			[]FilterFunction{f1},
+			ctx,
+			cancel,
+		)
+		spiderWorkers = append(spiderWorkers, spiderWorker)
+	}
+
+	spiderHandlers := make([]*SpiderHandler, 0)
+	for i := 0; i < 3; i++ {
+		ctx, cancel := context.WithCancel(parentCtx)
+		spiderHandler := NewSpiderHandler(NewClient(), ctx, cancel)
+		spiderHandlers = append(spiderHandlers, spiderHandler)
+	}
+
+	spiderSuppliers := make([]*SpiderSupplier, 0)
+	for i := 0; i < 3; i++ {
+		ctx, cancel := context.WithCancel(parentCtx)
+		spiderSupplier := NewSpiderSupplier(10, ctx, cancel)
+		spiderSuppliers = append(spiderSuppliers, spiderSupplier)
+	}
+
+	spiderBoss := NewSpiderBoss(spiderSuppliers, spiderWorkers, spiderHandlers, 1000, 1000, model.Baidu)
+	spiderBoss.Run()
+
 }
 
 func isHttpUrl(url string) bool {

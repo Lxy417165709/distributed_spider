@@ -10,13 +10,14 @@ import (
 
 type addressDao struct{}
 
-func (*addressDao) Create(url string, crawlSource model.CrawlSource) error {
+func (*addressDao) Create(url string, crawlSource model.CrawlSource, crawlNodeNum int) error {
 	if err := mysqlDB.Create(&model.Address{
-		CrawlStatus: model.NotCrawl,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		CrawlSource: crawlSource,
-		URL:         url,
+		CrawlStatus:  model.NotCrawl,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+		CrawlSource:  crawlSource,
+		Url:          url,
+		CrawlNodeNum: crawlNodeNum,
 	}).Error; err != nil {
 		//logger.Error("Fail to finish mysqlDB.Create", zap.String("url", url), zap.Error(err))
 		return err
