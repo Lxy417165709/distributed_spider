@@ -42,8 +42,8 @@ func (s *SpiderHandler) Run(crawlResultChannel chan *model.CrawlResult) {
 func (s *SpiderHandler) Handle(result *model.CrawlResult) {
 	// 1. 爬取错误时
 	if result.Err != nil {
-		logger.Error("Fail to crawl", zap.String("url", result.Url), zap.Error(result.Err))
-		if err := dao.AddressDB.UpdateStatus(result.Url, model.FailCrawled); err != nil {
+		logger.Error("Fail to crawl", zap.String("url", result.Address.Url), zap.Error(result.Err))
+		if err := dao.AddressDB.UpdateStatus(result.Address.Url, model.FailCrawled); err != nil {
 			logger.Error("Fail to finish AddressDB.UpdateStatus", zap.Error(result.Err))
 		}
 		return
@@ -53,19 +53,19 @@ func (s *SpiderHandler) Handle(result *model.CrawlResult) {
 	// 2.1 将该链接下所有未爬取的子链接加入爬取通道
 	for _, crawlUrl := range result.CrawlUrls {
 		go func(crawlUrl string) {
-			s.storeUrl(crawlUrl, result.CrawlSource, result.CrawlNodeNum)
+			s.storeUrl(crawlUrl, result.Address.CrawlSource, result.Address.CrawlNodeNum)
 		}(crawlUrl)
 	}
 
 	// 2.2 将该链接下所有爬取到、且未存储的图片进行存储
 	for _, imageUrl := range result.ImageUrls {
 		go func(imageUrl string) {
-			s.storeImage(imageUrl, result.AddressId)
+			s.storeImage(imageUrl, result.Address.Id)
 		}(imageUrl)
 	}
 
 	// 2.3 状态更新
-	if err := dao.AddressDB.UpdateStatus(result.Url, model.HadCrawled); err != nil {
+	if err := dao.AddressDB.UpdateStatus(result.Address.Url, model.HadCrawled); err != nil {
 		logger.Error("Fail to finish AddressDB.UpdateStatus", zap.Error(result.Err))
 		return
 	}

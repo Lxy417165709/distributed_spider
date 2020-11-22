@@ -12,8 +12,8 @@ type SpiderBoss struct {
 	spiderWorkers      []*SpiderWorker
 	spiderHandlers     []*SpiderHandler
 	crawlResultChannel chan *model.CrawlResult
-	crawlUrlChannel    chan string
-	crawlNodeNum int
+	addressChannel     chan *model.Address
+	crawlNodeNum       int
 	crawlSource        model.CrawlSource
 }
 
@@ -31,20 +31,20 @@ func NewSpiderBoss(
 		spiderWorkers:      workers,
 		spiderHandlers:     handlers,
 		crawlResultChannel: make(chan *model.CrawlResult, crawlResultChannelCap),
-		crawlUrlChannel:    make(chan string, crawlUrlChannelCap),
+		addressChannel:     make(chan *model.Address, crawlUrlChannelCap),
 		crawlSource:        crawlSource,
-		crawlNodeNum:crawlNodeNum,
+		crawlNodeNum:       crawlNodeNum,
 	}
 }
 
 func (s *SpiderBoss) Run() {
 	go s.ShowInfo()
 	for _, supplier := range s.spiderSuppliers {
-		go supplier.Run(s.crawlUrlChannel, s.crawlSource)
+		go supplier.Run(s.addressChannel, s.crawlSource)
 	}
 
 	for _, worker := range s.spiderWorkers {
-		go worker.Run(s.crawlUrlChannel, s.crawlResultChannel, s.crawlSource, s.crawlNodeNum)
+		go worker.Run(s.addressChannel, s.crawlResultChannel, s.crawlSource, s.crawlNodeNum)
 	}
 	for _, handler := range s.spiderHandlers {
 		go handler.Run(s.crawlResultChannel)
@@ -54,7 +54,7 @@ func (s *SpiderBoss) Run() {
 func (s *SpiderBoss) ShowInfo() {
 	for {
 		logger.Info("Channel show",
-			zap.Int("Len of crawlUrlChannel", len(s.crawlUrlChannel)),
+			zap.Int("Len of addressChannel", len(s.addressChannel)),
 			zap.Int("Len of crawlResultChannel", len(s.crawlResultChannel)))
 		time.Sleep(1 * time.Second)
 	}

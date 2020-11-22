@@ -12,12 +12,6 @@ import (
 
 type FilterFunction = func(doc *goquery.Document, res *http.Response) []string
 
-
-
-
-
-
-
 func NewClient() *http.Client {
 	//proxy := "127.0.0.1:52768"
 

@@ -19,7 +19,7 @@ func Init() {
 	const confFilePath = "C:\\Users\\hasee\\Desktop\\spider\\configure\\alpha.json"
 	utils.InitConfigure(confFilePath)
 	dao.InitDB(env.Conf.MainDB.Link, env.Conf.MainDB.Name, env.Conf.MainDB.MaxConn)
-	//dao.CloseLog()
+	dao.CloseLog()
 	cache.InitCache("120.26.162.39:20000", 0)
 }
 
@@ -65,7 +65,9 @@ func TestSpiderWorker(t *testing.T) {
 		context.Background(),
 		nil,
 	)
-	logger.Info("Crawl test", zap.Any("result", spiderWorker.Crawl("http://www.baidu.com",model.Baidu,0)))
+	logger.Info("Crawl test", zap.Any("result", spiderWorker.Crawl(&model.Address{
+		Url: "http://www.baidu.com",
+	})))
 }
 
 func TestSpiderBoss_Run(t *testing.T) {
@@ -117,7 +119,7 @@ func baiduSpider() *SpiderBoss {
 	}
 
 	spiderWorkers := make([]*SpiderWorker, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 20; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
 		spiderWorker := NewSpiderWorker(
 			[]FilterFunction{f2, f3},
@@ -129,14 +131,14 @@ func baiduSpider() *SpiderBoss {
 	}
 
 	spiderHandlers := make([]*SpiderHandler, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 20; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
 		spiderHandler := NewSpiderHandler(NewClient(), ctx, cancel)
 		spiderHandlers = append(spiderHandlers, spiderHandler)
 	}
 
 	spiderSuppliers := make([]*SpiderSupplier, 0)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 1; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
 		spiderSupplier := NewSpiderSupplier(100, ctx, cancel)
 		spiderSuppliers = append(spiderSuppliers, spiderSupplier)

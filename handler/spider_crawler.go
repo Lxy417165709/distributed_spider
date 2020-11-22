@@ -36,7 +36,7 @@ func NewSpiderWorker(
 }
 
 func (s *SpiderWorker) Run(
-	crawlUrlChannel chan string,
+	addressChannel chan *model.Address,
 	crawlResultChannel chan *model.CrawlResult,
 	source model.CrawlSource,
 	crawlNodeNum int,
@@ -45,27 +45,27 @@ func (s *SpiderWorker) Run(
 		select {
 		case <-s.ctx.Done():
 			return
-		case url := <-crawlUrlChannel:
-			crawlResultChannel <- s.Crawl(url,source,crawlNodeNum)
+		case address := <-addressChannel:
+			crawlResultChannel <- s.Crawl(address)
 		}
 		time.Sleep(5 * time.Second)
 	}
 }
 
-func (s *SpiderWorker) Crawl(visitUrl string,source model.CrawlSource,crawlNodeNum int) *model.CrawlResult {
+func (s *SpiderWorker) Crawl(address *model.Address) *model.CrawlResult {
 	// 1. 请求 url，获得响应
-	req, err := NewReq(visitUrl)
+	req, err := NewReq(address.Url)
 	if err != nil {
 		return &model.CrawlResult{
-			Url: visitUrl,
+			Address: address,
 			Err: err,
 		}
 	}
 	res, err := s.httpClient.Do(req)
 	if err != nil {
-		logger.Error("Fail to finish http.Get", zap.String("url", visitUrl), zap.Error(err))
+		logger.Error("Fail to finish http.Get", zap.String("url", address.Url), zap.Error(err))
 		return &model.CrawlResult{
-			Url: visitUrl,
+			Address: address,
 			Err: err,
 		}
 	}
@@ -76,7 +76,7 @@ func (s *SpiderWorker) Crawl(visitUrl string,source model.CrawlSource,crawlNodeN
 	}()
 	if res.StatusCode != http.StatusOK {
 		return &model.CrawlResult{
-			Url: visitUrl,
+			Address: address,
 			Err: fmt.Errorf("status is %d, expected %d", res.StatusCode, http.StatusOK),
 		}
 	}
@@ -85,15 +85,13 @@ func (s *SpiderWorker) Crawl(visitUrl string,source model.CrawlSource,crawlNodeN
 	crawlUrls, imageUrls := s.getCrawlUrlsAndImageUrls(res)
 	if len(crawlUrls) == 0 && len(imageUrls) == 0 {
 		return &model.CrawlResult{
-			Url: visitUrl,
+			Address: address,
 			Err: fmt.Errorf("response blank"),
 		}
 	}
 	return &model.CrawlResult{
-		Url:       visitUrl,
+		Address: address,
 		ImageUrls: imageUrls,
-		CrawlSource: source,
-		CrawlNodeNum: crawlNodeNum,
 		CrawlUrls: crawlUrls,
 	}
 }

@@ -24,26 +24,25 @@ func NewSpiderSupplier(supplyCount int,ctx context.Context,cancelFunc context.Ca
 	}
 }
 
-func (s *SpiderSupplier) Run(crawlUrlChannel chan string, crawlSource model.CrawlSource) {
+func (s *SpiderSupplier) Run(addressChannel chan *model.Address, crawlSource model.CrawlSource) {
 	for {
 		select {
 		case <-s.ctx.Done():
 			return
 		default:
-			urls := s.GetUrls(crawlSource)
-			for _, url := range urls {
-				crawlUrlChannel <- url
+			addresses := s.GetAddresses(crawlSource)
+			for _, ad := range addresses {
+				addressChannel <- ad
 			}
 		}
 		time.Sleep(5 * time.Second)
 	}
 }
 
-func (s *SpiderSupplier) GetUrls(source model.CrawlSource) []string {
+func (s *SpiderSupplier) GetAddresses(source model.CrawlSource) []*model.Address {
 	if !cache.Spider.GetSupplierLock() {
 		return nil
 	}
-
 	defer func() {
 		cache.Spider.ReleaseSupplierLock()
 	}()
@@ -62,5 +61,5 @@ func (s *SpiderSupplier) GetUrls(source model.CrawlSource) []string {
 		return nil
 	}
 
-	return urls
+	return addresses
 }
