@@ -18,3 +18,7 @@ var (
 func InitDB(link, dbName string, maxCon int) {
 	mysqlDB = utils.NewDB(utils.GenDSN(link, dbName), maxCon)
 }
+
+func CloseLog() {
+	mysqlDB.LogMode(false)
+}

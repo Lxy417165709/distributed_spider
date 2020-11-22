@@ -35,7 +35,7 @@ func (s *SpiderHandler) Run(crawlResultChannel chan *model.CrawlResult) {
 		case result := <-crawlResultChannel:
 			s.Handle(result)
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
 

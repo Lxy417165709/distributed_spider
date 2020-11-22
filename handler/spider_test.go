@@ -15,9 +15,10 @@ import (
 )
 
 func Init(){
-	const confFilePath = "configure/alpha.json"
+	const confFilePath = "C:\\Users\\hasee\\Desktop\\spider\\configure\\alpha.json"
 	utils.InitConfigure(confFilePath)
 	dao.InitDB(env.Conf.MainDB.Link, env.Conf.MainDB.Name, env.Conf.MainDB.MaxConn)
+	dao.CloseLog()
 }
 
 
