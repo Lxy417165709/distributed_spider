@@ -20,10 +20,11 @@ CREATE TABLE `spd_image`
 (
     `id`         INT UNSIGNED AUTO_INCREMENT COMMENT '自增ID',
     `url`        VARCHAR(511) NOT NULL DEFAULT '' COMMENT '图片数据来源URL',
-    `md5`        VARCHAR(511) NOT NULL DEFAULT '' UNIQUE COMMENT '图片MD5',
+    `md5`        VARCHAR(511) NOT NULL DEFAULT '' COMMENT '图片MD5',
     `address_id` INT          NOT NULL DEFAULT 0 COMMENT '来源地址ID',
     `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY(`md5`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='爬虫爬取图片表';
 

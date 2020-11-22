@@ -19,7 +19,7 @@ func Init() {
 	const confFilePath = "C:\\Users\\hasee\\Desktop\\spider\\configure\\alpha.json"
 	utils.InitConfigure(confFilePath)
 	dao.InitDB(env.Conf.MainDB.Link, env.Conf.MainDB.Name, env.Conf.MainDB.MaxConn)
-	dao.CloseLog()
+	//dao.CloseLog()
 	cache.InitCache("120.26.162.39:20000", 0)
 }
 
@@ -72,6 +72,9 @@ func TestSpiderBoss_Run(t *testing.T) {
 	Init()
 	cache.Spider.ReleaseSupplierLock()
 	baiduSpider := baiduSpider()
+	if err := dao.AddressDB.Create("http://baidu.com", model.Baidu, 0); err != nil {
+		logger.Error("Fail to finish AddressDB.Create", zap.Error(err))
+	}
 	baiduSpider.Run()
 	select {}
 }
@@ -135,7 +138,7 @@ func baiduSpider() *SpiderBoss {
 	spiderSuppliers := make([]*SpiderSupplier, 0)
 	for i := 0; i < 5; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
-		spiderSupplier := NewSpiderSupplier(10, ctx, cancel)
+		spiderSupplier := NewSpiderSupplier(100, ctx, cancel)
 		spiderSuppliers = append(spiderSuppliers, spiderSupplier)
 	}
 

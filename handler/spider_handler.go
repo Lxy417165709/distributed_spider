@@ -83,15 +83,15 @@ func (s *SpiderHandler) storeImage(imageUrl string, addressId int) {
 		logger.Warn("Image md5 is blank", zap.String("imageMd5", imageMd5))
 		return
 	}
-	image, err := dao.ImageDB.GetByMd5(imageMd5)
-	if err != nil {
-		logger.Error("Fail to finish ImageDB.GetByMd5", zap.String("imageMd5", imageMd5), zap.Error(err))
-		return
-	}
-	if image != nil {
-		//logger.Info("Image has exist", zap.Any("image", image))
-		return
-	}
+	//image, err := dao.ImageDB.GetByMd5(imageMd5)
+	//if err != nil {
+	//	logger.Error("Fail to finish ImageDB.GetByMd5", zap.String("imageMd5", imageMd5), zap.Error(err))
+	//	return
+	//}
+	//if image != nil {
+	//	//logger.Info("Image has exist", zap.Any("image", image))
+	//	return
+	//}
 	if err := dao.ImageDB.Create(imageUrl, imageMd5, addressId); err != nil {
 		//logger.Error("Fail to finish ImageDB.GetByMd5", zap.Error(err))
 		return
