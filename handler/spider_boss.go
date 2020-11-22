@@ -3,7 +3,6 @@ package handler
 import (
 	"go.uber.org/zap"
 	"spider/common/logger"
-	"spider/dao"
 	"spider/model"
 	"time"
 )
@@ -39,10 +38,6 @@ func NewSpiderBoss(
 }
 
 func (s *SpiderBoss) Run() {
-	if err := dao.AddressDB.Create("http://baidu.com", model.Baidu, s.crawlNodeNum); err != nil {
-		logger.Error("Fail to finish AddressDB.Create", zap.Error(err))
-	}
-
 	go s.ShowInfo()
 	for _, supplier := range s.spiderSuppliers {
 		go supplier.Run(s.crawlUrlChannel, s.crawlSource)

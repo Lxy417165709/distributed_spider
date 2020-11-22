@@ -5,6 +5,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
 	"net/http"
+	"spider/cache"
 	"spider/common/env"
 	"spider/common/logger"
 	"spider/common/utils"
@@ -14,11 +15,12 @@ import (
 	"testing"
 )
 
-func Init(){
+func Init() {
 	const confFilePath = "C:\\Users\\hasee\\Desktop\\spider\\configure\\alpha.json"
 	utils.InitConfigure(confFilePath)
 	dao.InitDB(env.Conf.MainDB.Link, env.Conf.MainDB.Name, env.Conf.MainDB.MaxConn)
 	dao.CloseLog()
+	cache.InitCache("120.26.162.39:20000", 0)
 }
 
 
@@ -68,6 +70,7 @@ func TestSpiderWorker(t *testing.T) {
 
 func TestSpiderBoss_Run(t *testing.T) {
 	Init()
+	cache.Spider.ReleaseSupplierLock()
 	baiduSpider := baiduSpider()
 	baiduSpider.Run()
 	select {}
@@ -111,7 +114,7 @@ func baiduSpider() *SpiderBoss {
 	}
 
 	spiderWorkers := make([]*SpiderWorker, 0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
 		spiderWorker := NewSpiderWorker(
 			[]FilterFunction{f2, f3},
@@ -123,14 +126,14 @@ func baiduSpider() *SpiderBoss {
 	}
 
 	spiderHandlers := make([]*SpiderHandler, 0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
 		spiderHandler := NewSpiderHandler(NewClient(), ctx, cancel)
 		spiderHandlers = append(spiderHandlers, spiderHandler)
 	}
 
 	spiderSuppliers := make([]*SpiderSupplier, 0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
 		spiderSupplier := NewSpiderSupplier(10, ctx, cancel)
 		spiderSuppliers = append(spiderSuppliers, spiderSupplier)

@@ -8,6 +8,7 @@ const (
 	NotCrawl CrawlStatus = iota
 	HadCrawled
 	FailCrawled
+	Crawling
 )
 
 type CrawlSource string

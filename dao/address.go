@@ -37,6 +37,18 @@ func (*addressDao) UpdateStatus(url string, status model.CrawlStatus) error {
 	return nil
 }
 
+func (*addressDao) UpdateStatusBatch(status model.CrawlStatus, urls ...string) error {
+	tableName := (&model.Address{}).TableName()
+	if err := mysqlDB.Table(tableName).Where("url in (?)", urls).Update(map[string]interface{}{
+		"crawl_status": status,
+		"updated_at":   time.Now(),
+	}).Error; err != nil {
+		logger.Error("Fail to finish Update", zap.Any("urls", urls), zap.Any("status", status), zap.Error(err))
+		return err
+	}
+	return nil
+}
+
 func (*addressDao) GetByUrl(url string) (*model.Address, error) {
 	var result model.Address
 	if err := mysqlDB.First(&result, "url = ?", url).Error; err != nil {

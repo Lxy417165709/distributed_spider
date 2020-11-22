@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"go.uber.org/zap"
+	"spider/cache"
 	"spider/common/logger"
 	"spider/dao"
 	"spider/model"
@@ -23,7 +24,7 @@ func NewSpiderSupplier(supplyCount int,ctx context.Context,cancelFunc context.Ca
 	}
 }
 
-func (s *SpiderSupplier) Run(crawlResultChannel chan string, crawlSource model.CrawlSource) {
+func (s *SpiderSupplier) Run(crawlUrlChannel chan string, crawlSource model.CrawlSource) {
 	for {
 		select {
 		case <-s.ctx.Done():
@@ -31,7 +32,7 @@ func (s *SpiderSupplier) Run(crawlResultChannel chan string, crawlSource model.C
 		default:
 			urls := s.GetUrls(crawlSource)
 			for _, url := range urls {
-				crawlResultChannel <- url
+				crawlUrlChannel <- url
 			}
 		}
 		time.Sleep(5 * time.Second)
@@ -39,6 +40,14 @@ func (s *SpiderSupplier) Run(crawlResultChannel chan string, crawlSource model.C
 }
 
 func (s *SpiderSupplier) GetUrls(source model.CrawlSource) []string {
+	if !cache.Spider.GetSupplierLock() {
+		return nil
+	}
+
+	defer func() {
+		cache.Spider.ReleaseSupplierLock()
+	}()
+
 	addresses, err := dao.AddressDB.GetNeedCrawlAddress(s.supplyCount, source)
 	if err != nil {
 		logger.Error("Fail to finish AddressDB.GetNeedCrawlAddress", zap.Error(err))
@@ -48,5 +57,10 @@ func (s *SpiderSupplier) GetUrls(source model.CrawlSource) []string {
 	for _, address := range addresses {
 		urls = append(urls, address.Url)
 	}
+	if err := dao.AddressDB.UpdateStatusBatch(model.Crawling, urls...); err != nil {
+		logger.Info("Fail to finish AddressDB.UpdateStatus", zap.Error(err))
+		return nil
+	}
+
 	return urls
 }

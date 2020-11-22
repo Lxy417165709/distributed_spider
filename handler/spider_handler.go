@@ -93,7 +93,7 @@ func (s *SpiderHandler) storeImage(imageUrl string, addressId int) {
 		return
 	}
 	if err := dao.ImageDB.Create(imageUrl, imageMd5, addressId); err != nil {
-		logger.Error("Fail to finish ImageDB.GetByMd5", zap.Error(err))
+		//logger.Error("Fail to finish ImageDB.GetByMd5", zap.Error(err))
 		return
 	}
 }

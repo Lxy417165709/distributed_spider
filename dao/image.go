@@ -17,11 +17,11 @@ func (*ImageDao) Create(dataUrl string, md5 string, addressId int) error {
 		AddressId: addressId,
 		CreatedAt: time.Now(),
 	}).Error; err != nil {
-		logger.Error("Fail to finish mysqlDB.Create",
-			zap.String("dataUrl", dataUrl),
-			zap.String("md5", md5),
-			zap.Int("addressId", addressId),
-			zap.Error(err))
+		//logger.Error("Fail to finish mysqlDB.Create",
+		//	zap.String("dataUrl", dataUrl),
+		//	zap.String("md5", md5),
+		//	zap.Int("addressId", addressId),
+		//	zap.Error(err))
 		return err
 	}
 	return nil
