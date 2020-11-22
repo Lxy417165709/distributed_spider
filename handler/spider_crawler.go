@@ -38,19 +38,21 @@ func NewSpiderWorker(
 func (s *SpiderWorker) Run(
 	crawlUrlChannel chan string,
 	crawlResultChannel chan *model.CrawlResult,
+	source model.CrawlSource,
+	crawlNodeNum int,
 ) {
 	for {
 		select {
 		case <-s.ctx.Done():
 			return
 		case url := <-crawlUrlChannel:
-			crawlResultChannel <- s.Crawl(url)
+			crawlResultChannel <- s.Crawl(url,source,crawlNodeNum)
 		}
 		time.Sleep(5 * time.Second)
 	}
 }
 
-func (s *SpiderWorker) Crawl(visitUrl string) *model.CrawlResult {
+func (s *SpiderWorker) Crawl(visitUrl string,source model.CrawlSource,crawlNodeNum int) *model.CrawlResult {
 	// 1. 请求 url，获得响应
 	req, err := NewReq(visitUrl)
 	if err != nil {
@@ -90,6 +92,8 @@ func (s *SpiderWorker) Crawl(visitUrl string) *model.CrawlResult {
 	return &model.CrawlResult{
 		Url:       visitUrl,
 		ImageUrls: imageUrls,
+		CrawlSource: source,
+		CrawlNodeNum: crawlNodeNum,
 		CrawlUrls: crawlUrls,
 	}
 }

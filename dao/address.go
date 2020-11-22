@@ -51,7 +51,7 @@ func (*addressDao) GetByUrl(url string) (*model.Address, error) {
 
 func (*addressDao) GetNeedCrawlAddress(count int, crawlSource model.CrawlSource) ([]*model.Address, error) {
 	var result []*model.Address
-	db := mysqlDB.Limit(count).Find(&result, "crawl_status = ? and crawl_from = ?", model.NotCrawl, crawlSource)
+	db := mysqlDB.Limit(count).Find(&result, "crawl_status = ? and crawl_source = ?", model.NotCrawl, crawlSource)
 	if err := db.Error; err != nil {
 		logger.Error("Fail to finish mysqlDB.Find", zap.Error(err))
 		return nil, err

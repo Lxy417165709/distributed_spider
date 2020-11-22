@@ -6,6 +6,8 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"spider/common/logger"
+	"spider/dao"
+	"spider/model"
 	"strings"
 	"testing"
 )
@@ -51,12 +53,18 @@ func TestSpiderWorker(t *testing.T) {
 		context.Background(),
 		nil,
 	)
-	logger.Info("Crawl test", zap.Any("result", spiderWorker.Crawl("http://www.baidu.com")))
+	logger.Info("Crawl test", zap.Any("result", spiderWorker.Crawl("http://www.baidu.com",model.Baidu,0)))
 }
 
-func baiduSpider() {
-	parentCtx := context.Background()
+func TestSpiderBoss_Run(t *testing.T) {
+	dao.InitDB("root:123456@tcp(120.26.162.39:40000)", "spider", 100)
+	baiduSpider := baiduSpider()
+	baiduSpider.Run()
+	select {}
+}
 
+func baiduSpider() *SpiderBoss {
+	parentCtx := context.Background()
 	f1 := func(doc *goquery.Document, res *http.Response) []string {
 		result := make([]string, 0)
 		doc.Find("a").Each(func(i int, s *goquery.Selection) {
@@ -118,9 +126,17 @@ func baiduSpider() {
 		spiderSuppliers = append(spiderSuppliers, spiderSupplier)
 	}
 
-	spiderBoss := NewSpiderBoss(spiderSuppliers, spiderWorkers, spiderHandlers, 1000, 1000, model.Baidu)
-	spiderBoss.Run()
+	spiderBoss := NewSpiderBoss(
+		spiderSuppliers,
+		spiderWorkers,
+		spiderHandlers,
+		1000,
+		1000,
+		model.Baidu,
+		0,
+	)
 
+	return spiderBoss
 }
 
 func isHttpUrl(url string) bool {
