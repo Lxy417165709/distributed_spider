@@ -5,12 +5,21 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
 	"net/http"
+	"spider/common/env"
 	"spider/common/logger"
+	"spider/common/utils"
 	"spider/dao"
 	"spider/model"
 	"strings"
 	"testing"
 )
+
+func Init(){
+	const confFilePath = "configure/alpha.json"
+	utils.InitConfigure(confFilePath)
+	dao.InitDB(env.Conf.MainDB.Link, env.Conf.MainDB.Name, env.Conf.MainDB.MaxConn)
+}
+
 
 func TestSpiderWorker(t *testing.T) {
 	f1 := func(doc *goquery.Document, res *http.Response) []string {
@@ -57,7 +66,7 @@ func TestSpiderWorker(t *testing.T) {
 }
 
 func TestSpiderBoss_Run(t *testing.T) {
-	dao.InitDB("root:123456@tcp(120.26.162.39:40000)", "spider", 100)
+	Init()
 	baiduSpider := baiduSpider()
 	baiduSpider.Run()
 	select {}
