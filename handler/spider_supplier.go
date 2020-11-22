@@ -14,13 +14,15 @@ type SpiderSupplier struct {
 	ctx         context.Context
 	cancelFunc context.CancelFunc
 	supplyCount int
+	id int
 }
 
-func NewSpiderSupplier(supplyCount int,ctx context.Context,cancelFunc context.CancelFunc) *SpiderSupplier {
+func NewSpiderSupplier(supplyCount int,id int,ctx context.Context,cancelFunc context.CancelFunc) *SpiderSupplier {
 	return &SpiderSupplier{
 		ctx:         ctx,
 		supplyCount: supplyCount,
 		cancelFunc:cancelFunc,
+		id:id,
 	}
 }
 
@@ -43,7 +45,9 @@ func (s *SpiderSupplier) GetAddresses(source model.CrawlSource) []*model.Address
 	if !cache.Spider.GetSupplierLock() {
 		return nil
 	}
+	logger.Info("Get supplier lock",zap.Int("ID",s.id))
 	defer func() {
+		logger.Info("Release supplier lock",zap.Int("ID",s.id))
 		cache.Spider.ReleaseSupplierLock()
 	}()
 
@@ -52,6 +56,7 @@ func (s *SpiderSupplier) GetAddresses(source model.CrawlSource) []*model.Address
 		logger.Error("Fail to finish AddressDB.GetNeedCrawlAddress", zap.Error(err))
 		return nil
 	}
+	logger.Info("Get addresses",zap.Int("ID",s.id))
 	urls := make([]string, 0)
 	for _, address := range addresses {
 		urls = append(urls, address.Url)
@@ -60,6 +65,5 @@ func (s *SpiderSupplier) GetAddresses(source model.CrawlSource) []*model.Address
 		logger.Info("Fail to finish AddressDB.UpdateStatus", zap.Error(err))
 		return nil
 	}
-
 	return addresses
 }

@@ -119,7 +119,7 @@ func baiduSpider() *SpiderBoss {
 	}
 
 	spiderWorkers := make([]*SpiderWorker, 0)
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 5; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
 		spiderWorker := NewSpiderWorker(
 			[]FilterFunction{f2, f3},
@@ -131,16 +131,16 @@ func baiduSpider() *SpiderBoss {
 	}
 
 	spiderHandlers := make([]*SpiderHandler, 0)
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 5; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
 		spiderHandler := NewSpiderHandler(NewClient(), ctx, cancel)
 		spiderHandlers = append(spiderHandlers, spiderHandler)
 	}
 
 	spiderSuppliers := make([]*SpiderSupplier, 0)
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 2; i++ {
 		ctx, cancel := context.WithCancel(parentCtx)
-		spiderSupplier := NewSpiderSupplier(100, ctx, cancel)
+		spiderSupplier := NewSpiderSupplier(1,i, ctx, cancel)
 		spiderSuppliers = append(spiderSuppliers, spiderSupplier)
 	}
 
